@@ -68,7 +68,6 @@ measured with 10,000 registry size:
 | epoch processing             | 2,910      | 29,447         |
 | get_attesting_indices        | 1,778      | 10,551         |
 | get_base_reward              | 253        | 18,047         |
-| get_crosslink_committee      | 54         | 198            |
 | get_total_active_balance     | 16         | 17,980         |
 | get_total_balance            | 7          | 17,937         |
 | get_active_validator_indices | 2          | 17             |
