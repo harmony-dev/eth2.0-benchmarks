@@ -58,7 +58,8 @@ After taking a look at call dependencies graph following method calls have been 
 - get_active_validator_indices
 - get_total_active_balance
 
-These caches significantly reduces epoch processing time growth. 
+These caches almost nullify an impact of registry size growth on epoch processing time.
+
 Take a look at a table below which compares cumulative times of method calls of epoch processing,
 measured with 10,000 registry size:
 
