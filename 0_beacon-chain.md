@@ -1,6 +1,6 @@
 # Beacon chain benchmarks
 
-This page contains description and analysis of data measured on execution of [Beacin chain spec](https://github.com/ethereum/eth2.0-specs/blob/dev/specs/core/0_beacon-chain.md).
+This page contains description and analysis of data measured from execution of [Beacin chain spec](https://github.com/ethereum/eth2.0-specs/blob/dev/specs/core/0_beacon-chain.md).
 
 ## Tooling
 Data in following sections has been collected with usage of [benchmaker](https://github.com/harmony-dev/beacon-chain-java/wiki/Benchmaker), a helper tool that benchmarking beacon chain spec.
@@ -10,17 +10,15 @@ There are other options used to turn off BLS, caches, etc.
 
 ## Consensus
 This section covers slot, block and epoch processing in a part which is related to attestations, crosslinks, rewards, penalties and finality. 
-In one word everything that is somehow related to the consensus part of the spec. 
+In other words everything that is related to consensus part of the spec. 
 
-Operations other than attestations are not covered by this section.
-Fork and fork choice rule is not benchmarked either and as there is only one chain blocks carry only one aggregate attestation.
+Operations other than attestations are not used in this section.
+Fork choice rule is not measured either and since runtime generates a single canonical chain number of aggregate attestations per block equals to a number of committees per slot.
 
 ### Setup
-General setup note worth mentioning is that all benchmarks in this section uses 
-[optimized shuffling](https://github.com/protolambda/eth2-shuffle/blob/master/shuffle.go#L159) 
-algorithm instead of the one described in the spec. 
-As first two epochs are partly used by epoch processing benchmaker uses first two epochs to warm up caches and hasher and starts measurements only from 3rd epoch.
-Other noticeable options will be listed within each part.
+Just a couple of things:
+- `compute_committee` uses [optimized shuffling](https://github.com/protolambda/eth2-shuffle/blob/master/shuffle.go#L159)
+- genesis and next to it epochs are always skipped as they are not completely processed
 
 ### Epoch processing complexity
 It obvious that epoch processing has at _least_ `O(n)` complexity where `n` is validator registry size.
@@ -30,35 +28,36 @@ with various registry sizes.
 #### v0.6.1
 Number of function calls counted during epoch processing with various registry sizes.
 
-| Method                                      | 1k validators | 10k validators |
-|---------------------------------------------|--------------:|---------------:|
-| **get_crosslink_committee**                 | 64,950        | 640,950        |
-| **get_attesting_indices**                   | 64,758        | 640,758        |
-| **get_active_validator_indices**            | 7,034         | 61,034         |
-| **get_total_balance**                       | 6,393         | 60,393         |
-| **get_total_active_balance**                | 6,003         | 60,003         |
-| **get_base_reward**                         | 6,000         | 60,000         |
-| get_epoch_committee_count                   | 964           | 964            |
-| get_shard_delta                             | 833           | 833            |
-| get_epoch_start_shard                       | 320           | 320            |
-| hash_tree_root                              | 311           | 311            |
-| get_unslashed_attesting_indices             | 196           | 196            |
-| get_winning_crosslink_and_attesting_indices | 192           | 192            |
-| get_attestation_slot                        | 64            | 64             |
-| generate_seed                               | 64            | 64             |
-| get_attesting_balance                       | 5             | 5              |
-| get_churn_limit                             | 1             | 1              |
+| Method                                      | 1k validators | 10k validators | 100k validators |
+|---------------------------------------------|--------------:|---------------:|----------------:|
+| **get_attesting_indices**                   | 64,758        | 640,758        | 76,808,644      |
+| **get_crosslink_committee**                 | 64,950        | 640,950        | n/a             |
+| **get_active_validator_indices**            | 7,034         | 61,034         | n/a             | 
+| **get_total_balance**                       | 6,393         | 60,393         | n/a             | 
+| **get_total_active_balance**                | 6,003         | 60,003         | 600,003         | 
+| **get_base_reward**                         | 6,000         | 60,000         | 600,000         | 
+| get_epoch_committee_count                   | 964           | 964            | 22,864          | 
+| get_shard_delta                             | 833           | 833            | 18,313          | 
+| get_epoch_start_shard                       | 320           | 320            | 6,852           | 
+| hash_tree_root                              | 311           | 311            | 3,721           | 
+| generate_seed                               | 64            | 64             | 3,780           | 
+| get_winning_crosslink_and_attesting_indices | 192           | 192            | 2,304           | 
+| get_unslashed_attesting_indices             | 196           | 196            | 1,801           | 
+| get_attestation_slot                        | 64            | 64             | 768             | 
+| get_attesting_balance                       | 5             | 5              | 5               | 
+| get_churn_limit                             | 1             | 1              | 1               | 
 
 <sup>*</sup> Methods referring to `O(n)` complexity are **highlighted**.
+<strong>Note:</strong> `get_attesting_indices` is called _N*M_ times where _M_ is number of shards per epoch, if registry size is _1m_ then it will at least be called `1,024,000,000` times in the best case (the case when each shard has a single aggregate attestation per slot).
 
 #### Complexity mitigation
-After taking a look at call dependencies graph following method calls have been cached:
+After taking a look at call dependencies following method results have been cached:
 - get_crosslink_committee
 - get_attesting_indices
 - get_active_validator_indices
 - get_total_active_balance
 
-These caches almost nullify an impact of registry size growth on epoch processing time.
+These caches drastically reduces an impact of registry size growth on epoch processing time.
 
 Take a look at a table below which compares cumulative times of method calls of epoch processing,
 measured with 10,000 registry size:
