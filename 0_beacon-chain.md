@@ -16,9 +16,14 @@ Operations other than attestations are not used in this section.
 Fork choice rule is not measured either and since runtime generates a single canonical chain number of aggregate attestations per block equals to a number of committees per slot.
 
 ### Setup
-Just a couple of things:
+A couple of general things:
 - `compute_committee` uses [optimized shuffling](https://github.com/protolambda/eth2-shuffle/blob/master/shuffle.go#L159)
 - genesis and next to it epochs are always skipped as they are not completely processed
+
+Laptop configuration:
+- MacBook Pro
+- 2.3GHz quad-core Intel Core i7
+- 16GB of 1600MHz DDR3L
 
 ### Epoch processing complexity
 It obvious that epoch processing has at _least_ `O(n)` complexity where `n` is validator registry size.
