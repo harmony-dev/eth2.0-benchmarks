@@ -28,8 +28,8 @@ with various registry sizes.
 #### v0.6.1
 Number of function calls counted during epoch processing with various registry sizes.
 
-| Method                                      | 1k validators | 10k validators | 100k validators |
-|---------------------------------------------|--------------:|---------------:|----------------:|
+| Routine                                     | 1k validators | 10k validators | 100k validators |
+|:--------------------------------------------|--------------:|---------------:|----------------:|
 | **get_attesting_indices**                   | 64,758        | 640,758        | 76,808,644      |
 | **get_crosslink_committee**                 | 64,950        | 640,950        | n/a             |
 | **get_active_validator_indices**            | 7,034         | 61,034         | n/a             | 
@@ -64,7 +64,7 @@ Take a look at a table below which compares cumulative times of method calls of 
 measured with 10,000 registry size:
 
 | Routine                      | Cached, ms | Not cached, ms |
-|------------------------------|-----------:|---------------:|
+|:-----------------------------|-----------:|---------------:|
 | epoch processing             | 2,910      | 29,447         |
 | get_attesting_indices        | 1,778      | 10,551         |
 | get_base_reward              | 253        | 18,047         |
@@ -76,7 +76,7 @@ measured with 10,000 registry size:
 Cumulative time of epoch processing routines with 100,000 registry size (768 committees per epoch):
 
 | Routine                                     |      Count | Time, ms |
-|---------------------------------------------|-----------:|---------:|
+|:--------------------------------------------|-----------:|---------:|
 | epoch processing                            | 1          | 329,063  |
 | get_attesting_indices                       | 76,808,644 | 229,031  |
 | get_crosslink_committee                     | 5,256      | 36,195   |
@@ -104,4 +104,35 @@ Further optimization is required to handle realistic registry sizes like 1,000,0
 100k validators:
 ```bash
 ./benchmaker --no-bls --epochs 1 --registry-size 100000
+```
+
+### Block processing
+Cumulative time of block processing routines with 100,000 registry size (12 committees per slot):
+
+| Routine              | Count | Time, ms |
+|:---------------------|------:|---------:|
+| block processing     | 1     | 7,130    |
+| process_attestation  | 12    | 6,974    |
+| process_block_header | 1     | 78       |
+| process_randao       | 1     | 77       |
+| process_eth1_data    | 1     | 0        |
+
+<sup>*</sup> BLS is enabled.
+
+#### BLS
+_99%_ of block processing time is taken by BLS:
+
+| Routine               | Count | Time, ms |
+|:----------------------|------:|---------:|
+| bls_aggregate_pubkeys | 24    | 5,487    |
+| bls_verify_multiple   | 12    | 1,418    |
+| bls_verify            | 2     | 155      |
+
+Two `bls_verify` calls correspond to proposer signature and randao reveal verifications, the others are used by `verify_indexed_attestation` as a part of `process_attestation` routine.
+
+Noticable fact is that public keys aggregation is _2 times_ slower than multiple verification which must not be the case. This is probably caused by `BLSPubkey` verification which happens for each pubkey passed to `bls_aggregate_pubkeys` and causes about _260_ extra EC muls per each processed block.
+
+#### Used commands
+```bash
+./benchmaker --epochs 1 --registry-size 100000
 ```
