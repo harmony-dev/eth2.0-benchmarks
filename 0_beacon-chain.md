@@ -48,7 +48,8 @@ Number of function calls counted during epoch processing with various registry s
 | get_churn_limit                             | 1             | 1              | 1               | 
 
 <sup>*</sup> Methods referring to `O(n)` complexity are **highlighted**.
-<strong>Note:</strong> `get_attesting_indices` is called _N*M_ times where _M_ is number of shards per epoch, if registry size is _1m_ then it will at least be called `1,024,000,000` times in the best case (the case when each shard has a single aggregate attestation per slot).
+
+<strong>Note:</strong> `get_attesting_indices` has _N*M_ calls where _M_ is number of shards crosslinked per epoch, if registry size is _1m_ then this function will be called `1,024,000,000` times in the best case (the case when each shard has a single aggregate attestation per slot).
 
 #### Complexity mitigation
 After taking a look at call dependencies following method results have been cached:
@@ -72,6 +73,23 @@ measured with 10,000 registry size:
 | get_active_validator_indices | 2          | 17             |
 
 
+Cumulative time of epoch processing routines with 100,000 registry size (768 committees per epoch):
+
+| Routine                                     |      Count | Time, ms |
+|---------------------------------------------|-----------:|---------:|
+| epoch processing                            | 1          | 329,063  |
+| get_attesting_indices                       | 76,808,644 | 229,031  |
+| get_crosslink_committee                     | 5,256      | 36,195   |
+| get_unslashed_attesting_indices             | 1,801      | 11,516   |
+| get_attesting_balance                       | 5          | 7,107    |
+| get_base_reward                             | 60,0000    | 1,127    |
+| get_winning_crosslink_and_attesting_indices | 2,304      | 505      |
+
+<sup>*</sup> caches are enabled.
+
+#### Conclusion
+Further optimization is required to handle realistic registry sizes like 1,000,000 validators, it highly likely involves optimization of some algorithms written in the spec.
+
 #### Used commands
 1k validators:
 ```bash
@@ -82,4 +100,8 @@ measured with 10,000 registry size:
 ```bash
 ./benchmaker --no-bls --epochs 1 --registry-size 10000
 ./benchmaker --no-bls --epochs 1 --registry-size 10000 --no-cache
+```
+100k validators:
+```bash
+./benchmaker --no-bls --epochs 1 --registry-size 100000
 ```
