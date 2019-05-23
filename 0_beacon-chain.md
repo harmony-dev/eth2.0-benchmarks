@@ -68,27 +68,27 @@ These caches drastically reduces an impact of registry size growth on epoch proc
 Take a look at a table below which compares cumulative times of method calls of epoch processing,
 measured with 10,000 registry size:
 
-| Routine                      | Cached, ms | Not cached, ms |
+| Routine                      | Cached, s  | Not cached, s  |
 |:-----------------------------|-----------:|---------------:|
-| epoch processing             | 2,910      | 29,447         |
-| get_attesting_indices        | 1,778      | 10,551         |
-| get_base_reward              | 253        | 18,047         |
-| get_total_active_balance     | 16         | 17,980         |
-| get_total_balance            | 7          | 17,937         |
-| get_active_validator_indices | 2          | 17             |
+| epoch processing             | 2.910      | 29.447         |
+| get_attesting_indices        | 1.778      | 10.551         |
+| get_base_reward              | 0.253      | 18.047         |
+| get_total_active_balance     | 0.016      | 17.980         |
+| get_total_balance            | 0.007      | 17.937         |
+| get_active_validator_indices | 0.002      | 0.017          |
 
 
 Cumulative time of epoch processing routines with 100,000 registry size (768 committees per epoch):
 
-| Routine                                     |      Count | Time, ms |
+| Routine                                     |      Count | Time, s  |
 |:--------------------------------------------|-----------:|---------:|
-| epoch processing                            | 1          | 329,063  |
-| get_attesting_indices                       | 76,808,644 | 229,031  |
-| get_crosslink_committee                     | 5,256      | 36,195   |
-| get_unslashed_attesting_indices             | 1,801      | 11,516   |
-| get_attesting_balance                       | 5          | 7,107    |
-| get_base_reward                             | 60,0000    | 1,127    |
-| get_winning_crosslink_and_attesting_indices | 2,304      | 505      |
+| epoch processing                            | 1          | 329.063  |
+| get_attesting_indices                       | 76,808,644 | 229.031  |
+| get_crosslink_committee                     | 5,256      | 36.195   |
+| get_unslashed_attesting_indices             | 1,801      | 11.516   |
+| get_attesting_balance                       | 5          | 7.107    |
+| get_base_reward                             | 60,0000    | 1.127    |
+| get_winning_crosslink_and_attesting_indices | 2,304      | 0.505    |
 
 <sup>*</sup> caches are enabled.
 
@@ -114,24 +114,24 @@ Further optimization is required to handle realistic registry sizes like 1,000,0
 ### Block processing
 Cumulative time of block processing routines with 100,000 registry size (12 committees per slot):
 
-| Routine              | Count | Time, ms |
+| Routine              | Count | Time, s  |
 |:---------------------|------:|---------:|
-| block processing     | 1     | 7,130    |
-| process_attestation  | 12    | 6,974    |
-| process_block_header | 1     | 78       |
-| process_randao       | 1     | 77       |
-| process_eth1_data    | 1     | 0        |
+| block processing     | 1     | 7.130    |
+| process_attestation  | 12    | 6.974    |
+| process_block_header | 1     | 0.078    |
+| process_randao       | 1     | 0.077    |
+| process_eth1_data    | 1     | 0.000    |
 
 <sup>*</sup> BLS is enabled.
 
 #### BLS
 _99%_ of block processing time is taken by BLS:
 
-| Routine               | Count | Time, ms |
+| Routine               | Count | Time, s  |
 |:----------------------|------:|---------:|
-| bls_aggregate_pubkeys | 24    | 5,487    |
-| bls_verify_multiple   | 12    | 1,418    |
-| bls_verify            | 2     | 155      |
+| bls_aggregate_pubkeys | 24    | 5.487    |
+| bls_verify_multiple   | 12    | 1.418    |
+| bls_verify            | 2     | 0.155    |
 
 Two `bls_verify` calls correspond to proposer signature and randao reveal verifications, the others are used by `verify_indexed_attestation` as a part of `process_attestation` routine.
 
